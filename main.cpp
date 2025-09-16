@@ -1,30 +1,38 @@
-﻿
+
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <ctime>
+#include <random>
+#include <set>
 
 struct Line {
 	int level;
 	int left;
 	int right; // right == left + 1
+
+	bool operator<(const Line& other) const {
+		if (level != other.level) {
+			return level < other.level;
+		}
+		return left < other.left;
+	}
 };
 
 // 오름차순.
-void bubble_sort(std::vector<int>& vec, std::vector<Line>& lines) {
+void bubble_sort(std::vector<int>& vec, std::set<Line>& lines) {
 	for (uint64_t i = vec.size() - 1; i > 0; --i) {
 		for (uint64_t j = 0; j < i; ++j) {
 			if (vec[j] > vec[j + 1]) {
 				std::swap(vec[j], vec[j + 1]);
 				
 				Line line{ vec.size() - 1 - i, j, j + 1};
-				lines.push_back(line);
+				lines.insert(line);
 			}
 		}
 	}
 }
 
-void change_line(std::vector<Line> lines, std::vector<Line>& result) {
+void change_line(const std::vector<Line>& lines, std::vector<Line>& result) {
 	if (lines.empty()) {
 		return;
 	}
@@ -40,7 +48,13 @@ void change_line(std::vector<Line> lines, std::vector<Line>& result) {
 			result.push_back(line);
 		}
 		else {
-			level = result[i - 1].level + lines[i].level - lines[i - 1].level;
+			// lines[i].level - lines[i - 1].level == 0 or 1
+			if (lines[i - 1].level == lines[i].level && lines[i - 1].right >= lines[i].right) {
+				++level;
+			}
+			if (lines[i - 1].level < lines[i].level) {
+				++level;
+			}
 			Line line{ level, lines[i].left, lines[i].right };
 			result.push_back(line);
 		}
@@ -59,25 +73,29 @@ void draw_ladder(const std::vector<int>& result, const std::vector<Line>& line_r
 	uint64_t min_level = now_level;
 	uint64_t max_level = line_result.empty() ? now_level : line_result.back().level;
 
-	std::vector<std::vector<Line>> table(max_level - now_level + 1);
+	std::vector<std::set<Line>> table(max_level - now_level + 1);
 
 	for (uint64_t i = 0; i < line_result.size(); ++i) {
-		table[line_result[i].level - min_level].push_back(line_result[i]);
+		table[line_result[i].level - min_level].insert(line_result[i]);
 	}
-
+	
 	std::reverse(table.begin(), table.end());
 
 	for (uint64_t i = 0; i < table.size(); ++i) {
-		int k = 0;
-		for (uint64_t j = 0; j < table[i].size(); ++j) {
-			for (; k < table[i][j].left; ++k) {
+		int k = 0;	
+		auto iter = table[i].begin();
+		for (; k < ladder_size; ++k) {
+			if (k < iter->left) {
 				std::cout << "|\t";
 			}
-			std::cout << "|-------|\t";
-			k = table[i][j].right + 1;
-		}
-		for (; k < ladder_size; ++k) {
-			std::cout << "|\t";
+			else if (k == iter->left && iter != table[i].end()) {
+				std::cout << "|-------|\t";
+				++k;
+				++iter;
+			}
+			else {
+				std::cout << "|\t";
+			}
 		}
 		std::cout << "\n";
 	}
@@ -90,13 +108,18 @@ void draw_ladder(const std::vector<int>& result, const std::vector<Line>& line_r
 
 int main(void)
 {
-	srand(time(nullptr));
+	//srand(time(nullptr));
 	std::vector<int> vec = { 0, 1, 2, 3, 4, 5, 6 }; // start from 0
-	std::vector<Line> lines;
+	std::set<Line> lines;
 
 	{
+		std::random_device rd;
+		std::mt19937 g(rd());
+		std::shuffle(vec.begin(), vec.end(), g);
 		//std::reverse(vec.begin(), vec.end());
-		std::random_shuffle(vec.begin(), vec.end());
+		//std::random_shuffle(vec.begin(), vec.end());
+		vec = { 5, 3, 6, 2, 4, 1, 0 };
+		// 2, 4, 0, 6, 1, 
 	}
 
 	std::cout << "\n";
@@ -105,7 +128,8 @@ int main(void)
 		std::vector<int> vec2 = vec;
 		bubble_sort(vec2, lines);
 		std::vector<Line> line_result;
-		change_line(lines, line_result);
+		std::vector<Line> lines_vec(lines.begin(), lines.end());
+		change_line(lines_vec, line_result);
 		draw_ladder(vec, line_result);
 	}
 
