@@ -24,8 +24,8 @@ void bubble_sort(std::vector<int>& vec, std::set<Line>& lines) {
 		for (uint64_t j = 0; j < i; ++j) {
 			if (vec[j] > vec[j + 1]) {
 				std::swap(vec[j], vec[j + 1]);
-				
-				Line line{ vec.size() - 1 - i, j, j + 1};
+
+				Line line{ vec.size() - 1 - i, j, j + 1 };
 				lines.insert(line);
 			}
 		}
@@ -38,7 +38,7 @@ void change_line(const std::vector<Line>& lines, std::vector<Line>& result) {
 	}
 
 	result.push_back(lines[0]);
-	
+
 	int level = lines[0].level;
 
 	for (uint64_t i = 1; i < lines.size(); ++i) {
@@ -78,17 +78,17 @@ void draw_ladder(const std::vector<int>& result, const std::vector<Line>& line_r
 	for (uint64_t i = 0; i < line_result.size(); ++i) {
 		table[line_result[i].level - min_level].insert(line_result[i]);
 	}
-	
+
 	std::reverse(table.begin(), table.end());
 
 	for (uint64_t i = 0; i < table.size(); ++i) {
-		int k = 0;	
+		int k = 0;
 		auto iter = table[i].begin();
 		for (; k < ladder_size; ++k) {
-			if (k < iter->left) {
+			if (iter != table[i].end() && k < iter->left) {
 				std::cout << "|\t";
 			}
-			else if (k == iter->left && iter != table[i].end()) {
+			else if (iter != table[i].end() && k == iter->left) {
 				std::cout << "|-------|\t";
 				++k;
 				++iter;
@@ -118,12 +118,12 @@ int main(void)
 		std::shuffle(vec.begin(), vec.end(), g);
 		//std::reverse(vec.begin(), vec.end());
 		//std::random_shuffle(vec.begin(), vec.end());
-		vec = { 5, 3, 6, 2, 4, 1, 0 };
+		vec = { 3, 0 ,6, 4, 2, 5, 1 };
 		// 2, 4, 0, 6, 1, 
 	}
 
 	std::cout << "\n";
-	
+
 	{
 		std::vector<int> vec2 = vec;
 		bubble_sort(vec2, lines);
